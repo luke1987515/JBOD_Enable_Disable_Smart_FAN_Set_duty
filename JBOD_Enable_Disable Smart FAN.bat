@@ -22,11 +22,17 @@ for /F %%i in ('sg_scan -s ^| find "AIC"') do (
   echo ====================
   echo Enclosure : "%%i"
   echo --------------------
-  sg_ses --descriptor=CoolingElement00 --%operator%=1:7:1 %%i
-  echo sg_ses --descriptor=CoolingElement00 --%operator%=1:7:1 %%i
-  echo sg_ses --descriptor=CoolingElement00 --get=1:7:1 %%i
-  :: sg_ses --descriptor=CoolingElement00 --get=1:7:1 %%i
-  sg_ses --descriptor=CoolingElement00 --get=1:7:1 %%i > info_A.tmp
+  :: Auto-detect descriptor
+  set "desc=CoolingElement00"
+  sg_ses -p ed %%i | findstr /i "SysCoolingElement00" >nul
+  if !errorlevel! equ 0 set "desc=SysCoolingElement00"
+  echo Using descriptor: !desc!
+
+  sg_ses --descriptor=!desc! --%operator%=1:7:1 %%i
+  echo sg_ses --descriptor=!desc! --%operator%=1:7:1 %%i
+  echo sg_ses --descriptor=!desc! --get=1:7:1 %%i
+  :: sg_ses --descriptor=!desc! --get=1:7:1 %%i
+  sg_ses --descriptor=!desc! --get=1:7:1 %%i > info_A.tmp
   echo --------------------
   for /f %%a in (info_A.tmp) do (
   set "var=%%a"

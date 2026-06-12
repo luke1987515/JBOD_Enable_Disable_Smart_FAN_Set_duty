@@ -29,10 +29,17 @@ for /F %%i in ('sg_scan -s ^| find "AIC"') do (
     set "found=1"
     echo ---------------------------------------------------
     echo Setting Enclosure: "%%i"
-    sg_ses --descriptor=CoolingElement00 --clear=1:7:1 %%i
+    
+    :: Auto-detect descriptor (CoolingElement00 or SysCoolingElement00)
+    set "desc=CoolingElement00"
+    sg_ses -p ed %%i | findstr /i "SysCoolingElement00" >nul
+    if !errorlevel! equ 0 set "desc=SysCoolingElement00"
+    echo Using descriptor: !desc!
+
+    sg_ses --descriptor=!desc! --clear=1:7:1 %%i
     
     :: Verify status
-    sg_ses --descriptor=CoolingElement00 --get=1:7:1 %%i > info_A.tmp
+    sg_ses --descriptor=!desc! --get=1:7:1 %%i > info_A.tmp
     for /f %%a in (info_A.tmp) do (
         if "%%a"=="0" echo GET 0 : Enable Smart Fan - Success
         if "%%a"=="1" echo GET 1 : Enable Smart Fan - FAILED
@@ -52,10 +59,17 @@ for /F %%i in ('sg_scan -s ^| find "AIC"') do (
     set "found=1"
     echo ---------------------------------------------------
     echo Disabling Smart Fan on Enclosure: "%%i"
-    sg_ses --descriptor=CoolingElement00 --set=1:7:1 %%i
+    
+    :: Auto-detect descriptor (CoolingElement00 or SysCoolingElement00)
+    set "desc=CoolingElement00"
+    sg_ses -p ed %%i | findstr /i "SysCoolingElement00" >nul
+    if !errorlevel! equ 0 set "desc=SysCoolingElement00"
+    echo Using descriptor: !desc!
+
+    sg_ses --descriptor=!desc! --set=1:7:1 %%i
     
     :: Verify status
-    sg_ses --descriptor=CoolingElement00 --get=1:7:1 %%i > info_A.tmp
+    sg_ses --descriptor=!desc! --get=1:7:1 %%i > info_A.tmp
     for /f %%a in (info_A.tmp) do (
         if "%%a"=="0" echo GET 0 : Disable Smart Fan - FAILED
         if "%%a"=="1" echo GET 1 : Disable Smart Fan - Success
@@ -79,8 +93,15 @@ for /F %%i in ('sg_scan -s ^| find "AIC"') do (
     set "device=%%i"
     set "exp=!device:~0,17!"
     echo ---------------------------------------------------
+    
+    :: Auto-detect descriptor (CoolingElement00 or SysCoolingElement00)
+    set "desc=CoolingElement00"
+    sg_ses -p ed !exp! | findstr /i "SysCoolingElement00" >nul
+    if !errorlevel! equ 0 set "desc=SysCoolingElement00"
+    echo Using descriptor: !desc!
+
     echo Setting fan duty to !FAN! for !exp!...
-    sg_ses --descriptor=CoolingElement00 --set 3:2:3=!FAN! !exp!
+    sg_ses --descriptor=!desc! --set 3:2:3=!FAN! !exp!
 )
 echo.
 echo Done setting all enclosures.
